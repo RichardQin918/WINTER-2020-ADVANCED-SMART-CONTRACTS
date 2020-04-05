@@ -24,13 +24,14 @@ config({
       "Purchase": {
         args: [price],
         fromIndex: 0
-      }
+      },
     }
   }
 }, (_err, web3_accounts) => {
   accounts = web3_accounts;
   buyerAddress = accounts[1];
   sellerAddress = accounts[0];
+  seller2 = accounts[2];
 });
 
 contract("Purchase", function () {
@@ -61,12 +62,37 @@ contract("Purchase", function () {
 
   it("Buyer confirm received", async function(){
     // test here
+    let result = await Purchase.methods.confirmReceived().send({
+      from: buyerAddress
+    });
+    let contractBuyerAddress = await Purchase.buyer();
+    let contractState = await Purchase.state();
+    
+    let contractBalance = await web3.eth.getBalance(Purchase.options.address);
+    assert.ok(contractBuyerAddress == buyerAddress);
+    assert.ok(contractBalance == 0);
+    assert.ok(contractState == state["INACTIVE"]);
   })
 
   it("Seller aborts item", async function(){
     // test here
-  })
+    /**
+     * Need to find ways to redploy contract and test abort methods. As once confirmed purchase, 
+     * purchase can no longer be aborted by seller
+     */
 
+    //Need to add redeploy method
+    let abortResult = await Purchase.methods.abort().send({
+      from: sellerAddress
+    });
+    let contractSellerAddress = await Purchase.seller();
+    let contractState = await Purchase.state();
+    let contractBalance = await web3.eth.getBalance(Purchase.options.address);
+    assert.ok(contractState == state["CREATED"]);
+    assert.ok(contractSellerAddress == sellerAddress);
+    assert.ok(contractBalance == 0);
+    assert.ok(contractState == state["INACTIVE"]);
+  })
   // it("set storage value", async function () {
   //   await SimpleStorage.methods.set(150).send({from: web3.eth.defaultAccount});
   //   let result = await SimpleStorage.methods.get().call();
